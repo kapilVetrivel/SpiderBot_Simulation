@@ -1,8 +1,9 @@
 # Create a Robot Simulation using Pybullet
 import pybullet as p
-import time
+import time, math
 import pybullet_data
 import os
+import traceback
 
 def clear_console():
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -25,6 +26,7 @@ class robot_sim():
     ## Load Pybullet environment
     def load_environment(self):
         self.physics_client = p.connect(p.GUI if self.render else p.DIRECT)
+        p.setRealTimeSimulation(1)  # Disable real-time simulation for better control over timing
         # p.configureDebugVisualizer(p.COV_ENABLE_WIREFRAME,1)
 
 
@@ -42,7 +44,7 @@ class robot_sim():
         self.flags = URDF_USE_INERTIA_FROM_FILE | URDF_USE_SELF_COLLISION
 
 
-        start_pos = [0, 0, 0]
+        start_pos = [0, 0, 1]
         start_orientation = p.getQuaternionFromEuler([0, 0, 0])
         self.robot_id = p.loadURDF(self.robot_urdf, start_pos, start_orientation, flags=self.flags)
 
@@ -55,15 +57,24 @@ class robot_sim():
     def get_robot_joints(self):
         num_joints = p.getNumJoints(self.robot_id)
         joint_info = [p.getJointInfo(self.robot_id, i) for i in range(num_joints)]
-        return num_joints, joint_info
+        
+        # create a list of joint indices, name, and angle limits
+        self.joint_indices = []
+        for info in joint_info:
+            joint_index = info[0]
+            joint_name = info[1].decode('utf-8')
+            lower_limit = round(info[8],2)
+            upper_limit = round(info[9],2)
+            self.joint_indices.append((joint_index, joint_name, lower_limit, upper_limit))
+            print(f"Joint Index: {joint_index}, Name: {joint_name}, Limits: [{lower_limit}, {upper_limit}] rads")
     
     ## Set camera to top-down view fitted to the robot body
     def setup_camera(self):
         pos, _ = self.get_robot_state()
         p.resetDebugVisualizerCamera(
             cameraDistance=1.0,   # adjust to zoom in/out
-            cameraYaw=0,
-            cameraPitch=0,      # -90 = straight down (top view)
+            cameraYaw=45,
+            cameraPitch=-90,      # -90 = straight down (top view)
             cameraTargetPosition=pos
         )
 
@@ -77,27 +88,20 @@ class robot_sim():
             self.time += 1./240.
         print("--- --> Robot Initialized.")
 
-    ## Move joints to specified positions using setJointMotorControlArray & Positional Control
-    ## by receiving incremental target positions for each joint in the form of a list
-    def move_joints(self, joint_indices, incremental_positions):
-
-        num_joints, joint_info = self.get_robot_joints()
-        current_positions = [p.getJointState(self.robot_id, i)[0] for i in range(num_joints)]
-        print(f"Current Joint Positions: {current_positions}")
-        input(f"Press Enter to move joints by {incremental_positions}...")
-        target_positions = [current_positions[i] + incremental_positions[i] for i in joint_indices]
-
-        p.setJointMotorControlArray(
-            bodyUniqueId=self.robot_id,
-            jointIndices=joint_indices,
-            controlMode=p.POSITION_CONTROL,
-            targetPositions=target_positions
-        )
-
-        # Step simulation to move joints
-        for _ in range(240):  # simulate for 1 second at 240Hz
-            p.stepSimulation()
-            time.sleep(1./240.)
+    ## Sweep all joints through their range of motion to test for collisions and joint limits
+    ## One leg at a time, sweep each joint from its lower limit to upper limit and return to midpoint position
+    def test_joint_sweep(self, duration=1):
+        print("--- --> Testing Joint Sweep...")
+        for joint_index, joint_name, lower_limit, upper_limit in self.joint_indices:
+            print(f"Testing Joint: {joint_name} (Index: {joint_index})")
+            midpoint = (lower_limit + upper_limit) / 2
+            p.setJointMotorControl2(self.robot_id, joint_index, p.POSITION_CONTROL, targetPosition=midpoint)
+            self.time = 0
+            while self.time < duration:
+                p.stepSimulation()
+                time.sleep(1./2.)
+                self.time += 1./2.
+        print("--- --> Joint Sweep Test Completed.")
 
     ## Disconnect and Close Pybullet    def close_sim(self):
     def close_environment(self):
@@ -111,8 +115,9 @@ class robot_sim():
         print("\n--> Setting up Physics...")
         self.setup_physics()
 
-        print("\n--> Loading Robot...")
+        print("\n--> Loading Robot and getting Joint Info...")
         self.load_robot()
+        self.get_robot_joints()
 
         print("\n--> Setting up Camera...")
         self.setup_camera()
@@ -120,15 +125,10 @@ class robot_sim():
         print("\n--> Starting Simulation. Press Ctrl+C to stop.")
         try:
             # Run the simulation for a few seconds to initialize the robot and environment
-            self.initialize_robot(2)
+            self.initialize_robot(2)   
 
-            # move all joints by +5deg & -5deg twice to test joint control
-            num_joints, joint_info = self.get_robot_joints()
-            joint_indices = list(range(num_joints))
-            incremental_positions = [0.0873] * num_joints  # +5 degrees
-            self.move_joints(joint_indices, incremental_positions)
-            incremental_positions = [-0.0873] * num_joints  # -5 degrees
-            self.move_joints(joint_indices, incremental_positions)
+            # Sweep all joints through their range of motion to test for collisions and joint limits
+            self.test_joint_sweep(1)
 
             input("\n--> Simulation Running. Press Enter to stop...")
 
@@ -137,6 +137,7 @@ class robot_sim():
 
         except Exception as e:
             print("\n--> Error Occurred: ", e)
+            print(traceback.format_exc())
 
         print("\n--> Closing Environment")
         self.close_environment()

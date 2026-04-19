@@ -171,42 +171,42 @@
             </geometry>
         </collision>
     </link>
-    <joint name="base_link_Revolute-2" type="revolute">
+    <joint name="base_link_Revolute-1" type="revolute">
         <origin xyz="0.08911 0.062000000000000006 0.01835" rpy="3.141592653589793 -0.0 0.0" />
         <parent link="base_link" />
         <child link="knee_FL" />
         <axis xyz="0.0 0.0 1.0" />
         <limit lower="-0.087266" upper="1.308997" effort="1000000" velocity="1000000" />
     </joint>
-    <joint name="base_link_Revolute-3" type="revolute">
+    <joint name="base_link_Revolute-5" type="revolute">
         <origin xyz="-0.08911 0.062000000000000006 0.01835" rpy="-3.141592653589793 -0.0 0.0" />
         <parent link="base_link" />
         <child link="knee_RL" />
         <axis xyz="0.0 4.4520966792844554e-18 1.0" />
         <limit lower="-1.308997" upper="0.087266" effort="1000000" velocity="1000000" />
     </joint>
-    <joint name="base_link_Revolute-4" type="revolute">
+    <joint name="base_link_Revolute-7" type="revolute">
         <origin xyz="-0.08911 -0.062000000000000006 0.01835" rpy="-3.141592653589783 -0.0 0.0" />
         <parent link="base_link" />
         <child link="knee_RR" />
         <axis xyz="0.0 1.04744440165294e-14 1.0" />
         <limit lower="-0.087266" upper="1.308997" effort="1000000" velocity="1000000" />
     </joint>
-    <joint name="base_link_Revolute-5" type="revolute">
+    <joint name="base_link_Revolute-3" type="revolute">
         <origin xyz="0.08911 -0.062000000000000006 0.01835" rpy="3.141592653589793 -0.0 0.0" />
         <parent link="base_link" />
         <child link="knee_FR" />
         <axis xyz="-0.0 -7.782894391141709e-17 1.0" />
-        <limit lower="-4.45059" upper="-3.054326" effort="1000000" velocity="1000000" />
+        <limit lower="1.832596" upper="3.403392" effort="1000000" velocity="1000000" />
     </joint>
-    <joint name="knee_FL_Revolute-6" type="revolute">
+    <joint name="knee_FL_Revolute-2" type="revolute">
         <origin xyz="0.01835000000000001 -0.032 0.03011" rpy="-3.141592653589776 1.5707963267948966 0" />
         <parent link="knee_FL" />
         <child link="leg_FL" />
         <axis xyz="-1.232595164407831e-32 1.7457406694215667e-14 1.0" />
         <limit lower="-0.523599" upper="1.919862" effort="1000000" velocity="1000000" />
     </joint>
-    <joint name="knee_FR_Revolute-7" type="revolute">
+    <joint name="knee_FR_Revolute-4" type="revolute">
         <origin xyz="0.01785 0.032 0.03011" rpy="1.7457406694215667e-14 1.5707963267948966 0" />
         <parent link="knee_FR" />
         <child link="leg_FR" />
@@ -220,7 +220,7 @@
         <axis xyz="0.0 -1.7457406694215667e-14 -1.0" />
         <limit lower="-1.919862" upper="0.523599" effort="1000000" velocity="1000000" />
     </joint>
-    <joint name="knee_RL_Revolute-10" type="revolute">
+    <joint name="knee_RL_Revolute-6" type="revolute">
         <origin xyz="0.018497009999999998 -0.03191524999999999 0.03011" rpy="-3.141592653589776 1.5707963267948966 0" />
         <parent link="knee_RL" />
         <child link="leg_RL" />
